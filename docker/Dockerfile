@@ -12,6 +12,7 @@ LABEL name="Boundary" \
       release=$VERSION \
       summary="Boundary provides simple and secure access to hosts and services" \
       description="The Boundary Docker image is designed to enable practitioners to run Boundary in server mode on a container scheduler"
+      org.opencontainers.image.source="https://github.com/jmcarbo/boundler"
 
 RUN addgroup boundary && \
     adduser -s /bin/sh -S -G boundary boundary

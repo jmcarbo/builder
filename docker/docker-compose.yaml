@@ -1,0 +1,51 @@
+# Use postgres/example user/password credentials
+version: '3.1'
+
+services:
+
+  postgres:
+    image: postgres:13-alpine
+    restart: always
+    environment:
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: boundary
+      POSTGRES_USER: user
+    volumes:
+       - db-data:/var/lib/postgresql/data
+
+  caddy:
+    image: caddy:2.2.1-alpine
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+    command: caddy reverse-proxy --from extern.foo.com --to 192.168.1.1:9200
+
+  boundary:
+    image: ghcr.io/jmcarbo/boundler:v0.1.7.2
+    restart: always
+    ports:
+      - "9200:9200"
+      - "9201:9201"
+      - "9202:9202"
+    environment:
+      BOUNDARY_POSTGRES_URL: postgresql://user:password@postgres:5432/boundary?sslmode=disable
+      WORKER_HOSTNAME: extern.foo.com
+      #extra_hosts:
+      #- ":"
+
+  boundary-init:
+    image: ghcr.io/jmcarbo/boundler:v0.1.7.2
+    #restart: "on-failure"
+    command: database init -config /boundary/config.hcl
+    environment:
+      BOUNDARY_POSTGRES_URL: postgresql://user:password@postgres:5432/boundary?sslmode=disable
+    deploy:
+      restart_policy:
+        condition: on-failure
+        delay: 10s
+        max_attempts: 5
+        window: 320s
+
+volumes:
+  db-data:
